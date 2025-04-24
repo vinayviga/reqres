@@ -1,6 +1,7 @@
 import { curlExtractor } from './support.js';
 import { test } from './fixtures.js';
 let curl = '';
+const success_statuses = [200, 201, 204, 304]; // Add any other success statuses you want to handle
 export class APIService {
     
     constructor(request) {
@@ -10,7 +11,7 @@ export class APIService {
     async get(url, headers = {}) {
         console.log(`GET Request: ${url}`);
         const response = await this.request.get(url, { headers });
-        if(response.status() !== 200)
+        if(!success_statuses.includes(response.status()) )
             {
                 curl =curlExtractor(url, 'GET', headers, null);
             }
@@ -24,10 +25,9 @@ export class APIService {
             headers,
             data: body
         });
-        //listing all possible success status codes
-        if(![200, 201].includes(response.status()))
+        if(!success_statuses.includes(response.status()))
         {
-           curl =  curlExtractor(url, 'POST', headers, body);
+           curl = curlExtractor(url, 'POST', headers, body);
         }
         return this.handleResponse(response, curl);
     }
@@ -39,7 +39,7 @@ export class APIService {
             headers,
             data: body
         });
-        if(response.status() !== 200)
+        if(!success_statuses.includes(response.status()))
             {
                curl = curlExtractor(url, 'PUT', headers, body);
             }
@@ -50,8 +50,8 @@ export class APIService {
         console.log(`DELETE Request: ${url}`);
 
         const response = await this.request.delete(url, { headers });
-        //listing all possible success status codes
-        if(![200, 204, 202].includes(response.status()))
+        
+        if(!success_statuses.includes(response.status()))
             {
                curl = curlExtractor(url, 'DELETE', headers, null);
             }
@@ -60,13 +60,13 @@ export class APIService {
 
     async handleResponse(response, curl) {
         console.log(` Response Status: ${response.status()}`);
-       if(curl !== '')
-        {    
-         //console.log(curl);
-         test.info().attach('Curl', {
-            body: curl,
-            contentType: "application/json"
-        });
+        // Use success_statuses array for consistency
+        if (!success_statuses.includes(response.status()) && curl !== '') {    
+            console.log(curl);
+            test.info().attach('Curl', {
+                body: curl,
+                contentType: "application/json"
+            });
         }
         return response;
     }
